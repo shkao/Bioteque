@@ -5,7 +5,7 @@ Here we provide the code used for the Bioteque resource and the pre-processings 
 **Resource**: https://bioteque.irbbarcelona.org
 
 **Citation**: Fernandez-Torras, A., Duran-Frigola, M. Bertoni, M. Locatelli, M. & Aloy, P.
-Integrating and formatting biomedical data in the Bioteque, a comprehensive repository of pre-calculated knowledge graph embeddings. bioRxiv (2022). (https://doi.org/10.1101/2022.05.11.491490)
+Integrating and formatting biomedical data as pre-calculated knowledge graph embeddings in the Bioteque. Nature Communications (2022). (https://doi.org/10.1038/s41467-022-33026-0)
 
 ## **How to explore an embedding space**
 
