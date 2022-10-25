@@ -14,7 +14,7 @@ subprocess.Popen('./get_chebi.sh', shell = True).wait()
 
 #--Process Ontology
 chebi = ONT.CHEBI('./chebi.obo')
-ch2ik = chebi.get_chebi2drug()
+ch2ik = chebi.chb2ikey
 res = set([])
 for r in sorted(chebi.get_child2parent(map_chebi2drug=False)):
     if r[0] in ch2ik:
@@ -23,10 +23,11 @@ for r in sorted(chebi.get_child2parent(map_chebi2drug=False)):
         res.add((ch2ik[r[1]], r[0], r[2]))
 
 #Iterating through chebi and writing file
+if not os.path.exists(out_path+'/CPD-has-CHE/'):
+    os.mkdir(out_path+'/CPD-has-CHE/')
 with open(out_path+'/CPD-has-CHE/%s.tsv'%source, 'w') as o:
     o.write('n1\tn2\ttype\n')
     for r in sorted(res):
         o.write('%s\t%s\t%s\n'%(r[0],r[1],r[2]))
-
 
 sys.stderr.write('Done!\n')

@@ -527,9 +527,43 @@ class CELLOSAURUS(Hierarchy):
 
 class CHEBI(Hierarchy):
 
-    def __init__(self, path=None,chebi2drug_path=None):
-        self.path = path if path is not None else db_path+'/chebi.obo.txt'
-        self.chebi2drug_path = chebi2drug_path if chebi2drug_path is not None else db_path+'/ChEBI2ikey.tsv'
+    def __init__(self, path):
+        self.path = path
+
+        #-- chebi2drug
+        chebi2ikey = {}
+        flag = False
+        ID = ''
+        ikey = ''
+        obsolete = False
+
+        with open(self.path,'r') as f:
+            for l in f:
+                if l == '[Term]\n':
+                    flag = True
+                elif l == '\n' and flag is True:
+
+                    #Avoiding obsolete terms
+                    if flag is True:
+                        if ikey == '': continue
+                        chebi2ikey[ID] = ikey
+
+                    #cleaning
+                    flag = True
+                    ID = ''
+                    obsolete = False
+                    ikey = ''
+
+                if flag is True:
+
+                    if 'is_obsolete: true' in l:
+                        flag = False
+                    if 'property_value: http://purl.obolibrary.org/obo/chebi/inchikey' in l:
+                        ikey = l.split('"')[1].strip()
+                    if l.startswith('id:'):
+                        ID = l.rstrip().split('id: ')[-1]
+
+        self.chb2ikey = chebi2ikey
 
     def get_child2parent(self,map_chebi2drug=True, get_type=True,allowed_relationships=set([
                                  'has_role',
@@ -547,14 +581,6 @@ class CHEBI(Hierarchy):
         flag = False
         child2parent = []
 
-        chb2ikey = {}
-        if map_chebi2drug is True:
-            with open(self.chebi2drug_path,'r') as f:
-                f.readline()
-                for l in f:
-                    h = l.rstrip().split('\t')
-                    chb2ikey[h[0]] = h[1]
-
         with open(self.path,'r') as f:
 
             for l in f:
@@ -563,13 +589,13 @@ class CHEBI(Hierarchy):
 
                 elif l == '\n':
                     if flag:
-                        if AC in chb2ikey:
-                            AC = chb2ikey[AC]
+                        if map_chebi2drug and AC in self.chb2ikey:
+                            AC = self.chb2ikey[AC]
 
                         #Iterating through "is_a"
                         for hit in H:
-                            if hit in chb2ikey:
-                                hit = chb2ikey[hit]
+                            if map_chebi2drug and hit in self.chb2ikey:
+                                hit = self.chb2ikey[hit]
 
                             if get_type:
                                 child2parent.append([AC,hit,'is_a'])
@@ -580,8 +606,8 @@ class CHEBI(Hierarchy):
                         for hits in rel:
                             hit = hits[0]
                             the_type = hits[1]
-                            if hit in chb2ikey:
-                                hit = chb2ikey[hit]
+                            if map_chebi2drug and hit in self.chb2ikey:
+                                hit = self.chb2ikey[hit]
 
                             if get_type:
                                 child2parent.append([AC,hit,the_type])
@@ -616,15 +642,14 @@ class CHEBI(Hierarchy):
             for hits in rel:
                 hit = hits[0]
                 the_type = hits[1]
-                if hit in chb2ikey:
-                    hit = chb2ikey[hit]
+                if map_chebi2drug and hit in self.chb2ikey:
+                    hit = self.chb2ikey[hit]
 
                 if get_type:
                     child2parent.append([AC,hit,the_type])
                 else:
                     child2parent.append([AC,hit])
         return child2parent
-
 
 class EFO(Hierarchy):
 
