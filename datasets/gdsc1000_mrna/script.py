@@ -43,7 +43,7 @@ df = df.drop(index=[None]) #removing unmapped clls
 
 # Mapping Genes
 e2u = {}
-e2u = mps.get_ensembl2human_rev_unip()
+e2u = mps.get_ensembl2up()
 
 df = df[list(set(df.columns)&set(e2u))]
 
@@ -80,6 +80,11 @@ for cl , expr in df.iterrows():
     dwr.update(zip([cl]*max_gns, gns[ixs[:max_gns]]))
 
 # Writing output
+if not os.path.exists(out_path+'/CLL-upr-GEN'):
+    os.mkdir(out_path+'/CLL-upr-GEN')
+
+if not os.path.exists(out_path+'/CLL-dwr-GEN'):
+    os.mkdir(out_path+'/CLL-dwr-GEN')
 
 #upr
 with open(out_path+'/CLL-upr-GEN/%s.tsv'%source,'w') as o:
