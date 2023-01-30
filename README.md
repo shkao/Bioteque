@@ -43,5 +43,4 @@ The notebook includes:
 - Take into account that, as many of these scripts fetch the data directly from the main repositories, changes made by the original data owners (e.g. changing the download path or the format of the files) may cause the script to fail its processing.
 - Please, apart from citing our work also cite the original publication of the dataset you use.
 
-For further information, please contact martina.locatelli@irbbarcelona.org.
 
