@@ -1,0 +1,3 @@
+Version: Corum 5.0 release (2024-09-03)
+Download Date: 2024-10-21
+Source URL: https://mips.helmholtz-muenchen.de/corum/download

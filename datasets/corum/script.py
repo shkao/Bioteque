@@ -1,33 +1,43 @@
-import sys
 import os
+import sys
 import subprocess
-sys.path.insert(0, '../../code/kgraph/utils/')
+import pandas as pd
+from itertools import combinations
+from pathlib import Path
+
+sys.path.insert(
+    0, str(Path(__file__).resolve().parent.parent.parent / "code/kgraph/utils")
+)
 import mappers as mps
+
 guv = mps.get_human_reviewed_uniprot()
 
-out_path = '../../graph/raw/'
-current_path = '/'.join(os.path.realpath(__file__).split('/')[:-1])
-source = current_path.split('/')[-1]
+out_path = Path("../../graph/raw/")
+current_path = Path(__file__).resolve().parent
+source = current_path.name
 
-#--Download the data
-subprocess.Popen('./get_data.sh', shell = True).wait()
+# Download the data
+data_file = Path("./allComplexes.txt")
+if not data_file.exists():
+    subprocess.run(["python", "get_data.py"], check=True)
 
-edges = set([])
-with open('./allComplexes.txt', 'r') as f:
-    f.readline()
-    for l in f:
-        r = l.rstrip().split('\t')
+edges = set()
+df = pd.read_csv(data_file, sep="\t")
 
-        if r[2] != 'Human': continue
-        ups = r[5].split(';')
-        for g1 in ups:
-            for g2 in ups:
-                if g1 == g2: continue
-                edges.add(tuple(sorted([g1,g2])))
+human_rows = df[df["organism"] == "Human"]
+for subunits in human_rows["subunits_uniprot_id"].dropna():
+    subunit_list = subunits.split(";")
+    edges.update(
+        tuple(sorted(pair))
+        for pair in combinations(subunit_list, 2)
+        if pair[0] != pair[1]
+    )
 
-with open(out_path+'/GEN-ppi-GEN/%s.tsv'%source,'w') as o:
-    o.write('n1\tn2\n')
-    for i in sorted(edges):
-        o.write('%s\t%s\n'%(i[0],i[1]))
-sys.stderr.write('Done!\n')
+output_dir = out_path / "GEN-ppi-GEN"
+output_dir.mkdir(parents=True, exist_ok=True)
+with open(output_dir / f"{source}.tsv", "w") as o:
+    o.write("n1\tn2\n")
+    for edge in sorted(edges):
+        o.write(f"{edge[0]}\t{edge[1]}\n")
 
+sys.stderr.write("Done!\n")
