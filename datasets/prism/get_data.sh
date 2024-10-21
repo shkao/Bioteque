@@ -7,13 +7,9 @@ set -euo pipefail
 url="https://figshare.com/ndownloader/files/20237739"
 file="secondary-screen-dose-response-curve-parameters.csv"
 
-if [[ ! -f "$file" ]]; then
-    if curl --output /dev/null --silent --head --fail "$url"; then
-        wget -O "$file" "$url"
-    else
-        echo "URL not found: $url"
-        exit 1
-    fi
+if curl --output /dev/null --silent --head --fail "$url"; then
+    wget -O "$file" "$url"
 else
-    echo "File already exists: $file"
+    echo "URL not found: $url"
+    exit 1
 fi

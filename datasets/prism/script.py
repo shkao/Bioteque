@@ -18,7 +18,8 @@ current_path = Path(__file__).resolve().parent
 source = current_path.name
 
 # Download data
-subprocess.run("./get_data.sh", shell=True, check=True)
+if not os.path.exists("./secondary-screen-dose-response-curve-parameters.csv"):
+    subprocess.run("./get_data.sh", shell=True, check=True)
 
 # Map drugs to IDs
 drug_to_id = mps.get_prism2ikey()
