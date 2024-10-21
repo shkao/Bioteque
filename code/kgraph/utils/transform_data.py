@@ -1,5 +1,6 @@
 import sys
 import os
+import warnings
 import numpy as np
 import pandas as pd
 from collections import Counter
@@ -257,7 +258,7 @@ def drug_sens_stratified_waterfall(vector, uncertainty_margin=0.2, uncertainty_m
             cutoff = y[0] - 1 #No cll will be considered as sensitive
 
     #6) Stratifying
-    np.warnings.filterwarnings('ignore')
+    warnings.filterwarnings('ignore')
     str_v = v.copy()
 
     if ternary:
@@ -303,7 +304,7 @@ def drug_sens_stratified_waterfall(vector, uncertainty_margin=0.2, uncertainty_m
         if (str_v==1).sum() > max_cls:
             str_v[[ix for ix in np.argsort(v)[max_cls:] if str_v[ix] == 1]] = 0
 
-    np.warnings.filterwarnings('default')
+    warnings.filterwarnings('default')
 
     if plot:
         plt.figure(figsize=(5,5),dpi=100)
