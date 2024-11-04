@@ -1,60 +1,62 @@
-import os
+from pathlib import Path
 import sys
 import subprocess
 import numpy as np
 import csv
+import pandas as pd
 from tqdm import tqdm
-sys.path.insert(0, '../../code/kgraph/utils/')
+
+sys.path.insert(0, "../../code/kgraph/utils/")
 import mappers as mps
 
-out_path = '../../graph/raw/'
-current_path = '/'.join(os.path.realpath(__file__).split('/')[:-1])
-source = current_path.split('/')[-1]
+output_dir = Path("../../graph/raw/CPD-trt-DIS")
+current_path = Path(__file__).resolve().parent
+source = current_path.name
 
-#--Downloading the data
-subprocess.Popen('./get_data.sh', shell = True).wait()
+# Download the data if not already present
+data_script = current_path / "get_data.sh"
+if not (output_dir / f"{source}.tsv").exists():
+    subprocess.run(str(data_script), shell=True, check=True)
 
-# Read DrugBank structures
-db2ikey = mps.get_drugbank2ikey()
+# Load DrugBank structures
+drugbank_to_ikey = mps.get_drugbank2ikey()
 
-#Read indications
-m = []
-f = open("./repodb.csv", "r")
-f.readline()
-for h in csv.reader(f):
-
-        if h[5] in ('Withdrawn','Suspended','NA'):continue
-        dg = h[1]
-        if dg in db2ikey:
-            dg = db2ikey[dg]
-        else:
+# Load indications
+indications = []
+with open("./repodb.csv", "r") as file:
+    reader = csv.reader(file)
+    next(reader)  # Skip header
+    for row in reader:
+        if row[5] in {"Withdrawn", "Suspended", "NA"}:
             continue
-        dis = h[3]
-        if h[5] in set(['Approved']):
+        drug_id = row[1]
+        drug_id = drugbank_to_ikey.get(drug_id, None)
+        if not drug_id:
+            continue
+        disease = row[3]
+        phase_label = row[6]
+        if row[5] == "Approved":
             phase = 4
-        elif 'Phase 3' in h[6] :
+        elif "Phase 3" in phase_label:
             phase = 3
-        elif 'Phase 2' in h[6]:
+        elif "Phase 2" in phase_label:
             phase = 2
-        elif 'Phase 1' in h[6]:
+        elif "Phase 1" in phase_label:
             phase = 1
-        elif 'Phase 0' in h[6]:
+        elif "Phase 0" in phase_label:
             phase = 0
         else:
-            sys.exit('Unknown phase label: %s'%h[6])
+            sys.exit(f"Unknown phase label: {phase_label}")
 
-        #Keeping results
-        m.append([dg,dis,phase])
+        indications.append([drug_id, disease, phase])
 
-#Parsing diseases
-m = np.asarray(m,dtype=object)
-m[:,1] = mps.parse_diseaseID(m[:,1])
+# Parse diseases and convert to DataFrame
+indications_df = pd.DataFrame(indications, columns=["drug_id", "disease", "phase"])
+indications_df["disease"] = mps.parse_diseaseID(indications_df["disease"])
 
-#Writing file
-with open(out_path+'/CPD-trt-DIS/%s.tsv'%source,'w') as o:
-    o.write('n1\tn2\tphase\n')
+# Write to file
+output_dir.mkdir(parents=True, exist_ok=True)
+output_file = output_dir / f"{source}.tsv"
+indications_df.to_csv(output_file, sep="\t", index=False, header=["n1", "n2", "phase"])
 
-    for r in m:
-        o.write('%s\t%s\t%i\n'%(r[0],r[1],r[2]))
-
-sys.stderr.write('Done!\n')
+sys.stderr.write("Done!\n")
